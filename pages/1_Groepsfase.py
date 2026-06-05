@@ -11,9 +11,9 @@ st.info(
     "Daarnaast plaatsen ook de 8 beste nummers 3 zich voor de knock-outfase."
 )
 
-# -------------------------
+# --------------------------------
 # Groepen laden
-# -------------------------
+# --------------------------------
 
 groepen_df = pd.read_csv("data/groepen.csv")
 
@@ -29,9 +29,15 @@ for _, row in groepen_df.iterrows():
 
     groepen[groep].append(team)
 
-# -------------------------
-# Iedere groep tonen
-# -------------------------
+# --------------------------------
+# Alle standen verzamelen
+# --------------------------------
+
+alle_standen = []
+
+# --------------------------------
+# Groepen verwerken
+# --------------------------------
 
 for groep_naam in sorted(groepen.keys()):
 
@@ -43,6 +49,10 @@ for groep_naam in sorted(groepen.keys()):
 
     resultaten = []
 
+    # --------------------------------
+    # Wedstrijden invoeren
+    # --------------------------------
+
     for team1, team2 in wedstrijden:
 
         col1, col2, col3 = st.columns([4, 1, 1])
@@ -51,8 +61,9 @@ for groep_naam in sorted(groepen.keys()):
             st.write(f"**{team1} - {team2}**")
 
         with col2:
+
             score1 = st.number_input(
-                label=f"{team1}",
+                label=team1,
                 min_value=0,
                 max_value=20,
                 value=0,
@@ -60,21 +71,25 @@ for groep_naam in sorted(groepen.keys()):
             )
 
         with col3:
+
             score2 = st.number_input(
-                label=f"{team2}",
+                label=team2,
                 min_value=0,
                 max_value=20,
                 value=0,
                 key=f"{groep_naam}_{team1}_{team2}_2"
             )
 
-        resultaten.append(
-            [team1, score1, score2, team2]
-        )
+        resultaten.append([
+            team1,
+            score1,
+            score2,
+            team2
+        ])
 
-    # -------------------------
-    # Wedstrijd tabel
-    # -------------------------
+    # --------------------------------
+    # Wedstrijd DataFrame
+    # --------------------------------
 
     df = pd.DataFrame(
         resultaten,
@@ -86,9 +101,9 @@ for groep_naam in sorted(groepen.keys()):
         ]
     )
 
-    # -------------------------
+    # --------------------------------
     # Stand berekenen
-    # -------------------------
+    # --------------------------------
 
     stand = {}
 
@@ -127,6 +142,10 @@ for groep_naam in sorted(groepen.keys()):
             stand[team1]["Punten"] += 1
             stand[team2]["Punten"] += 1
 
+    # --------------------------------
+    # Stand DataFrame
+    # --------------------------------
+
     stand_df = pd.DataFrame(stand).T
 
     stand_df["Doelsaldo"] = (
@@ -154,9 +173,25 @@ for groep_naam in sorted(groepen.keys()):
         range(1, len(stand_df) + 1)
     )
 
-    # -------------------------
-    # Resultaat tonen
-    # -------------------------
+    # --------------------------------
+    # Opslaan voor knockoutfase
+    # --------------------------------
+
+    for _, row in stand_df.iterrows():
+
+        alle_standen.append({
+            "Groep": groep_naam,
+            "Pos": row["Pos"],
+            "Land": row["Land"],
+            "Punten": row["Punten"],
+            "Voor": row["Voor"],
+            "Tegen": row["Tegen"],
+            "Doelsaldo": row["Doelsaldo"]
+        })
+
+    # --------------------------------
+    # Tonen
+    # --------------------------------
 
     col_links, col_rechts = st.columns([2, 1])
 
@@ -181,3 +216,14 @@ for groep_naam in sorted(groepen.keys()):
         )
 
     st.divider()
+
+# --------------------------------
+# Alle standen opslaan
+# --------------------------------
+
+standen_df = pd.DataFrame(alle_standen)
+
+standen_df.to_csv(
+    "data/groepsstanden.csv",
+    index=False
+)
